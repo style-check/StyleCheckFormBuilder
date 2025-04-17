@@ -20,8 +20,10 @@ export const AddProductStyleDialog: React.FC<AddProductStyleDialogProps> = ({
     onClose,
     onSuccess,
     type,
-    productTypeId = "defaultProductTypeId", // Default to a dummy value if not passed
+    productTypeId
 }) => {
+    // Validate productTypeId
+    const isValidProductTypeId = productTypeId && productTypeId !== "defaultProductTypeId";
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         product_style_name: '',
@@ -33,12 +35,21 @@ export const AddProductStyleDialog: React.FC<AddProductStyleDialogProps> = ({
         product_type_id: productTypeId, // Use the parentId as product_type_id
     });
 
+    // Keep product_type_id in sync if productTypeId changes
+    React.useEffect(() => {
+        setFormData(prev => ({ ...prev, product_type_id: productTypeId }));
+    }, [productTypeId]);
+
     const createNewItem = async () => {
+        if (!isValidProductTypeId) {
+            toast.error('A valid parent product type must be selected.');
+            return { success: false };
+        }
         const formDataToSend = new FormData();
         formDataToSend.append('product_style_name', formData.product_style_name);
         formDataToSend.append('visibility', formData.visibility ? '1' : '0');
         formDataToSend.append('created_time', new Date().toISOString());
-        formDataToSend.append('product_type_id', formData.product_type_id); // Link to product type
+        formDataToSend.append('product_type_id', productTypeId!); // Always use prop
         formDataToSend.append('description', formData.description);
         formDataToSend.append('has_active_items', String(formData.has_active_items));
         formDataToSend.append('show_in_menu', formData.show_in_menu ? '1' : '0'); // Add show_in_menu field
@@ -129,7 +140,10 @@ export const AddProductStyleDialog: React.FC<AddProductStyleDialogProps> = ({
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>Create Product Style</Button>
+                        <Button type="submit" disabled={isSubmitting || !isValidProductTypeId}>Create Product Style</Button>
+                        {!isValidProductTypeId && (
+                            <div className="text-red-500 text-xs mt-2">A valid parent product type must be selected.</div>
+                        )}
                     </DialogFooter>
                 </form>
             </DialogContent>

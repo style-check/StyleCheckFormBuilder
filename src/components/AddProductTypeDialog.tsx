@@ -20,8 +20,10 @@ export const AddProductTypeDialog: React.FC<AddProductTypeDialogProps> = ({
     onClose,
     onSuccess,
     type,
-    parentId = "defaultParentId", // Default to a dummy value if not passed
+    parentId
 }) => {
+    // Validate parentId
+    const isValidParentId = parentId && parentId !== "defaultParentId";
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         product_type_name: '',
@@ -44,6 +46,10 @@ export const AddProductTypeDialog: React.FC<AddProductTypeDialogProps> = ({
     }, [parentId]);
 
     const createNewItem = async () => {
+        if (!isValidParentId) {
+            toast.error('A valid parent subcategory type must be selected.');
+            return { success: false };
+        }
         // Log data being sent to backend
         console.log("Sending data to API:", formData);
 
@@ -51,7 +57,7 @@ export const AddProductTypeDialog: React.FC<AddProductTypeDialogProps> = ({
         formDataToSend.append('product_type_name', formData.product_type_name);
         formDataToSend.append('visibility', formData.visibility ? '1' : '0');
         formDataToSend.append('created_time', new Date().toISOString());
-        formDataToSend.append('sub_category_type_id', formData.sub_category_type_id); // Ensure this is passed
+        formDataToSend.append('sub_category_type_id', parentId!); // Ensure this is passed
         formDataToSend.append('description', formData.description);
         formDataToSend.append('depth', String(formData.depth));
         formDataToSend.append('has_active_items', String(formData.has_active_items));
@@ -143,8 +149,11 @@ export const AddProductTypeDialog: React.FC<AddProductTypeDialogProps> = ({
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>Create Product Type</Button>
+                        <Button type="submit" disabled={isSubmitting || !isValidParentId}>Create Product Type</Button>
                     </DialogFooter>
+                    {!isValidParentId && (
+                        <div className="text-red-500 text-xs mt-2">A valid parent subcategory type must be selected.</div>
+                    )}
                 </form>
             </DialogContent>
         </Dialog>

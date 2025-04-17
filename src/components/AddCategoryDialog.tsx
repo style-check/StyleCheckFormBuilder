@@ -15,7 +15,9 @@ interface AddCategoryDialogProps {
   parentId?: string;
 }
 
-export const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onClose, onSuccess, type, parentId = "defaultParentId" }) => {
+export const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onClose, onSuccess, type, parentId }) => {
+  // Validate parentId
+  const isValidParentId = parentId && parentId !== "defaultParentId";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     category_name: '',
@@ -28,12 +30,19 @@ export const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onCl
   });
 
   const createNewItem = async () => {
+    // For first-level categories, parent_category_id should always be null (or "" as per backend)
+    if (formData.depth === 1) {
+      // No parent validation required
+    } else if (!isValidParentId) {
+      toast.error('A valid parent category must be selected.');
+      return { success: false };
+    }
     const formDataToSend = new FormData();
     formDataToSend.append('category_name', formData.category_name);
     formDataToSend.append('visibility', '1');
     formDataToSend.append('show_in_menu', String(formData.show_in_menu));
     formDataToSend.append('created_time', new Date().toISOString());
-    formDataToSend.append('parent_category_id', parentId);
+    formDataToSend.append('parent_category_id', formData.depth === 1 ? '0' : parentId!); // Use '0' for top-level as required
     formDataToSend.append('has_active_items', String(formData.has_active_items));
     formDataToSend.append('depth', String(formData.depth));
     formDataToSend.append('description', formData.description);
@@ -87,10 +96,33 @@ export const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onCl
             <Input id="image" type="file" required onChange={(e) => { const file = e.target.files?.[0]; if (file) { setFormData(prev => ({ ...prev, image: file })); } }} />
           </div>
 
+          {/* Visibility Toggle */}
+          <div className="flex items-center justify-between">
+            <Label htmlFor="visibility">Visibility</Label>
+            <Switch
+              id="visibility"
+              checked={formData.visibility}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, visibility: checked }))}
+            />
+          </div>
+
+          {/* Show in Menu Toggle */}
+          <div className="flex items-center justify-between">
+            <Label htmlFor="show_in_menu">Show in Menu</Label>
+            <Switch
+              id="show_in_menu"
+              checked={formData.show_in_menu}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, show_in_menu: checked }))}
+            />
+          </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>Create Category</Button>
+            <Button type="submit" disabled={isSubmitting || (formData.depth > 1 && !isValidParentId)}>Create Category</Button>
           </DialogFooter>
+          {formData.depth > 1 && !isValidParentId && (
+            <div className="text-red-500 text-xs mt-2">A valid parent category must be selected.</div>
+          )}
         </form>
       </DialogContent>
     </Dialog>

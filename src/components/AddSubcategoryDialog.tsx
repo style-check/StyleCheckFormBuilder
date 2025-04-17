@@ -20,8 +20,10 @@ export const AddSubcategoryDialog: React.FC<AddSubcategoryDialogProps> = ({
     onClose,
     onSuccess,
     type,
-    parentId = "defaultParentId", // Default to a dummy value if not passed
+    parentId
 }) => {
+    // Validate parentId
+    const isValidParentId = parentId && parentId !== "defaultParentId";
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         subcategory_name: '',
@@ -35,12 +37,16 @@ export const AddSubcategoryDialog: React.FC<AddSubcategoryDialogProps> = ({
     });
 
     const createNewItem = async () => {
+        if (!isValidParentId) {
+            toast.error('A valid parent category must be selected.');
+            return { success: false };
+        }
         const formDataToSend = new FormData();
         formDataToSend.append('sub_category_name', formData.subcategory_name);
         formDataToSend.append('visibility', formData.visibility ? '1' : '0');
         formDataToSend.append('show_in_menu', String(formData.show_in_menu));
         formDataToSend.append('created_time', new Date().toISOString());
-        formDataToSend.append('category_id', formData.category_id); // Use category_id from parentId
+        formDataToSend.append('category_id', parentId!); // Use parentId directly
         formDataToSend.append('has_active_items', String(formData.has_active_items));
         formDataToSend.append('depth', String(formData.depth));
         formDataToSend.append('description', formData.description);
@@ -135,8 +141,11 @@ export const AddSubcategoryDialog: React.FC<AddSubcategoryDialogProps> = ({
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>Create Subcategory</Button>
+                        <Button type="submit" disabled={isSubmitting || !isValidParentId}>Create Subcategory</Button>
                     </DialogFooter>
+                    {!isValidParentId && (
+                        <div className="text-red-500 text-xs mt-2">A valid parent category must be selected.</div>
+                    )}
                 </form>
             </DialogContent>
         </Dialog>

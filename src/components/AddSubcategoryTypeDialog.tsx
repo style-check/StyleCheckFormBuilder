@@ -22,8 +22,10 @@ export const AddSubcategoryTypeDialog: React.FC<AddSubcategoryTypeDialogProps> =
     onClose,
     onSuccess,
     type,
-    parentId = "defaultParentId", // Default to a dummy value if not passed
+    parentId
 }) => {
+    // Validate parentId
+    const isValidParentId = parentId && parentId !== "defaultParentId";
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         subcategory_type_name: '',
@@ -37,11 +39,15 @@ export const AddSubcategoryTypeDialog: React.FC<AddSubcategoryTypeDialogProps> =
     });
 
     const createNewItem = async () => {
+        if (!isValidParentId) {
+            toast.error('A valid parent subcategory must be selected.');
+            return { success: false };
+        }
         const formDataToSend = new FormData();
         formDataToSend.append('sub_category_type_name', formData.subcategory_type_name);
         formDataToSend.append('visibility', formData.visibility ? '1' : '0');
         formDataToSend.append('created_time', new Date().toISOString());
-        formDataToSend.append('sub_category_id', formData.sub_category_id); // Link to subcategory
+        formDataToSend.append('sub_category_id', parentId!); // Link to subcategory
         formDataToSend.append('description', formData.description);
         formDataToSend.append('depth', String(formData.depth));
         formDataToSend.append('has_active_items', String(formData.has_active_items));
@@ -133,8 +139,11 @@ export const AddSubcategoryTypeDialog: React.FC<AddSubcategoryTypeDialogProps> =
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>Create Subcategory Type</Button>
+                        <Button type="submit" disabled={isSubmitting || !isValidParentId}>Create Subcategory Type</Button>
                     </DialogFooter>
+                    {!isValidParentId && (
+                        <div className="text-red-500 text-xs mt-2">A valid parent subcategory must be selected.</div>
+                    )}
                 </form>
             </DialogContent>
         </Dialog>

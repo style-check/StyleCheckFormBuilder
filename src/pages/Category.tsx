@@ -326,9 +326,9 @@ export const Category = () => {
         onClose={() => setShowProductTypeDialog(false)}
         onSuccess={handleSuccess}
         type="product-type"
-        parentId={productTypeId}  // Pass product_type_id to product type dialog
+        parentId={selectedValues.subcategoryType || ""}  // Always pass subcategory type id as a string
       />
-      <AddProductStyleDialog open={showProductStyleDialog} onClose={() => setShowProductStyleDialog(false)} onSuccess={handleSuccess} type="product-style" productTypeId={productTypeId} />
+      <AddProductStyleDialog open={showProductStyleDialog} onClose={() => setShowProductStyleDialog(false)} onSuccess={handleSuccess} type="product-style" productTypeId={selectedValues.productType || ""} />
     </div>
   );
 };
