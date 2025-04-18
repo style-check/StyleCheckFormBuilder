@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { createSubcategoryTypeApi } from '@/services/api';  // Ensure the import is correct
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { useFormContext } from '@/context/FormContext';
+import { EntityData, EntityType } from '@/types';
 
 interface AddSubcategoryTypeDialogProps {
     open: boolean;
@@ -24,6 +27,9 @@ export const AddSubcategoryTypeDialog: React.FC<AddSubcategoryTypeDialogProps> =
     type,
     parentId
 }) => {
+    const navigate = useNavigate();
+    const { setEntityFormData } = useFormContext();
+
     // Validate parentId
     const isValidParentId = parentId && parentId !== "defaultParentId";
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,14 +77,31 @@ export const AddSubcategoryTypeDialog: React.FC<AddSubcategoryTypeDialogProps> =
             setIsSubmitting(true);
             const result = await createNewItem();
             if (result.success) {
-                toast.success('Subcategory Type created successfully');
-                onSuccess(); // Trigger success callback
-                onClose(); // Close the dialog
+                const entityData: EntityData = {
+                    name: formData.subcategory_type_name,
+                    description: formData.description || '',
+                    image: formData.image,
+                    visibility: formData.visibility,
+                    show_in_menu: formData.show_in_menu,
+                    created_time: new Date().toISOString(),
+                    type: 'subcategoryType' as EntityType,
+                    parent_id: parentId || undefined
+                };
+
+                setEntityFormData(entityData);
+                onSuccess();
+                onClose();
+                navigate('/', { 
+                    state: { 
+                        entityData,
+                        replace: true 
+                    }
+                });
             }
         } catch (error) {
             toast.error('Error creating subcategory type');
         } finally {
-            setIsSubmitting(false); // Reset submitting state
+            setIsSubmitting(false);
         }
     };
 

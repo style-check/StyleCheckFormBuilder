@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { createProductStyleApi } from '@/services/api';  // Ensure the import is correct
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { useFormContext } from '@/context/FormContext';
+import { EntityData, EntityType } from '@/types';
 
 interface AddProductStyleDialogProps {
     open: boolean;
@@ -22,6 +25,9 @@ export const AddProductStyleDialog: React.FC<AddProductStyleDialogProps> = ({
     type,
     productTypeId
 }) => {
+    const navigate = useNavigate();
+    const { setEntityFormData } = useFormContext();
+
     // Validate productTypeId
     const isValidProductTypeId = productTypeId && productTypeId !== "defaultProductTypeId";
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,14 +78,31 @@ export const AddProductStyleDialog: React.FC<AddProductStyleDialogProps> = ({
             setIsSubmitting(true);
             const result = await createNewItem();
             if (result.success) {
-                toast.success('Product Style created successfully');
-                onSuccess(); // Trigger success callback
-                onClose(); // Close the dialog
+                const entityData: EntityData = {
+                    name: formData.product_style_name,
+                    description: formData.description || '',
+                    image: formData.image,
+                    visibility: formData.visibility,
+                    show_in_menu: formData.show_in_menu,
+                    created_time: new Date().toISOString(),
+                    type: 'productStyle' as EntityType,
+                    parent_id: productTypeId || undefined
+                };
+
+                setEntityFormData(entityData);
+                onSuccess();
+                onClose();
+                navigate('/', { 
+                    state: { 
+                        entityData,
+                        replace: true 
+                    }
+                });
             }
         } catch (error) {
             toast.error('Error creating product style');
         } finally {
-            setIsSubmitting(false); // Reset submitting state
+            setIsSubmitting(false);
         }
     };
 
