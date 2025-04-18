@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { createProductTypeApi } from '@/services/api'; // Ensure the import is correct
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { useFormContext } from '@/context/FormContext';
+import { EntityData, EntityType } from '@/types';
 
 interface AddProductTypeDialogProps {
     open: boolean;
@@ -22,6 +25,9 @@ export const AddProductTypeDialog: React.FC<AddProductTypeDialogProps> = ({
     type,
     parentId
 }) => {
+    const navigate = useNavigate();
+    const { setEntityFormData } = useFormContext();
+
     // Validate parentId
     const isValidParentId = parentId && parentId !== "defaultParentId";
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,22 +87,42 @@ export const AddProductTypeDialog: React.FC<AddProductTypeDialogProps> = ({
             setIsSubmitting(true);
             const result = await createNewItem();
             if (result.success) {
-                toast.success('Product Type created successfully');
-                onSuccess(); // Trigger success callback
-                onClose(); // Close the dialog
+                const entityData: EntityData = {
+                    name: formData.product_type_name,
+                    description: formData.description || '',
+                    image: formData.image,
+                    visibility: formData.visibility,
+                    show_in_menu: formData.show_in_menu,
+                    created_time: new Date().toISOString(),
+                    type: 'productType' as EntityType,
+                    parent_id: parentId || undefined
+                };
+
+                setEntityFormData(entityData);
+                onSuccess();
+                onClose();
+                navigate('/', { 
+                    state: { 
+                        entityData,
+                        replace: true 
+                    }
+                });
             }
         } catch (error) {
             toast.error('Error creating product type');
         } finally {
-            setIsSubmitting(false); // Reset submitting state
+            setIsSubmitting(false);
         }
     };
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Add New Product Type</DialogTitle>
+                    <DialogDescription>
+                        Create a new product type. Fill in the details below.
+                    </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>

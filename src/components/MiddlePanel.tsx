@@ -14,10 +14,14 @@ export const MiddlePanel = () => {
     moveComponent,
     selectedComponent,
     setSelectedComponent,
+    entityData,
   } = useFormContext();
 
   const location = useLocation();
-  const categoryData = location.state?.categoryData;
+  const locationState = location.state as { entityData?: any };
+
+  // Use either context data or location state
+  const displayData = entityData || locationState?.entityData;
 
   const moveCard = (dragIndex: number, hoverIndex: number, parentId?: string) => {
     moveComponent(dragIndex, hoverIndex, parentId);
@@ -48,43 +52,58 @@ export const MiddlePanel = () => {
 
   return (
     <div className="w-2/4 p-4 h-[calc(100vh-73px)] overflow-y-auto space-y-6">
-      {/* Category Data Display */}
-      {categoryData && (
+      {displayData && (
         <div className="p-6 border rounded-lg shadow-sm bg-white">
           <div className="flex items-start gap-6">
             <div className="w-1/3">
               <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                <img 
-                  src={categoryData.image}
-                  alt={categoryData.category_name}
-                  className="w-full h-full object-contain"
-                />
+                {displayData.image instanceof File ? (
+                  <img 
+                    src={URL.createObjectURL(displayData.image)}
+                    alt={displayData.name}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-400">No Image</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex-1">
               <div className="flex justify-between items-start">
                 <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-                  {categoryData.category_name}
+                  {displayData.name}
                 </h2>
                 <span className="text-sm text-gray-500">
-                  Created: {new Date().toLocaleString()}
+                  Created: {new Date(displayData.created_time).toLocaleString()}
                 </span>
               </div>
               <div className="space-y-4">
-                {categoryData.description && (
+                {displayData.description && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Description</h3>
-                    <p className="mt-1 text-gray-700">{categoryData.description}</p>
+                    <p className="mt-1 text-gray-700">{displayData.description}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
+                    <h3 className="text-sm font-medium text-gray-500">Type</h3>
+                    <p className="mt-1 text-gray-700 capitalize">{displayData.type}</p>
+                  </div>
+                  {displayData.parent_id && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Parent ID</h3>
+                      <p className="mt-1 text-gray-700">{displayData.parent_id}</p>
+                    </div>
+                  )}
+                  <div>
                     <h3 className="text-sm font-medium text-gray-500">Visibility</h3>
-                    <p className="mt-1 text-gray-700">{categoryData.visibility ? 'Visible' : 'Hidden'}</p>
+                    <p className="mt-1 text-gray-700">{displayData.visibility ? 'Visible' : 'Hidden'}</p>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Menu Display</h3>
-                    <p className="mt-1 text-gray-700">{categoryData.show_in_menu ? 'Shown in Menu' : 'Hidden from Menu'}</p>
+                    <p className="mt-1 text-gray-700">{displayData.show_in_menu ? 'Shown in Menu' : 'Hidden from Menu'}</p>
                   </div>
                 </div>
               </div>

@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { createCategoryApi } from '@/services/api';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { useFormContext } from '@/context/FormContext';
+import { CategoryData, EntityType } from '@/types';
 
 interface AddCategoryDialogProps {
   open: boolean;
@@ -16,6 +19,9 @@ interface AddCategoryDialogProps {
 }
 
 export const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onClose, onSuccess, type, parentId }) => {
+  const navigate = useNavigate();
+  const { setCategoryFormData } = useFormContext();
+
   // Validate parentId
   const isValidParentId = parentId && parentId !== "defaultParentId";
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,8 +70,27 @@ export const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onCl
       const result = await createNewItem();
       if (result.success) {
         toast.success('Category created successfully');
+        
+        // Prepare category data with correct type
+        const categoryFormData: CategoryData = {
+          name: formData.category_name,
+          category_name: formData.category_name, // Add this line
+          description: formData.description || '',
+          image: formData.image,
+          visibility: formData.visibility,
+          show_in_menu: formData.show_in_menu,
+          created_time: new Date().toISOString(),
+          type: 'category'
+        };
+
+// Set the data in context and navigate
+        setCategoryFormData(categoryFormData);
         onSuccess();
         onClose();
+        navigate('/', { 
+          state: { entityData: categoryFormData },
+          replace: true 
+        });
       }
     } catch (error) {
       toast.error('Error creating category');

@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useCallback } from "react";
 import { toast } from "sonner";
-import { FormComponentData, FormContextType } from "@/types";
+import { FormComponentData, FormContextType, CategoryData, EntityData } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
 interface ProductDescriptionJson {
@@ -19,6 +19,8 @@ export const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isGeneratingForm, setIsGeneratingForm] = useState(false);
   const [generatedForm, setGeneratedForm] = useState<FormComponentData[] | null>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [categoryData, setCategoryData] = useState<CategoryData | null>(null);
+  const [entityData, setEntityData] = useState<EntityData | null>(null);
 
   const setComponents = useCallback(
     (newComponents: FormComponentData[] | ((prev: FormComponentData[]) => FormComponentData[])) => {
@@ -26,6 +28,14 @@ export const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     []
   );
+
+  const setCategoryFormData = useCallback((data: CategoryData) => {
+    setCategoryData(data);
+  }, []);
+
+  const setEntityFormData = useCallback((data: EntityData) => {
+    setEntityData(data);
+  }, []);
 
   const editGeneratedForm = useCallback(() => {
     if (generatedForm) {
@@ -301,6 +311,10 @@ export const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setComponents,
         editGeneratedForm,
         getComponentCount,
+        categoryData,
+        setCategoryFormData,
+        entityData,
+        setEntityFormData,
       }}
     >
       {children}
